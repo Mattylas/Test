@@ -1,4 +1,4 @@
-// ====================
+// ------------------- PHRASES -------------------
 const phrases = [
   "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
@@ -347,32 +347,20 @@ const phrases = [
 
 ];
 
-const fonts = ["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
-
-// ====================
-// CANVAS
-// ====================
+// ------------------- CANVAS -------------------
 const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
 let W, H;
-
-function resize(){
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resize);
+function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+window.onresize = resize;
 resize();
 
-// ====================
-// VARIABLES GLOBALES
-// ====================
-let speed = 1;
-let bgCorruption = 0;
-let clusters = [];
+// ------------------- GLOBALS -------------------
+let speed = 0.7;
+let bgTime = 0;
+let shakeCooldown = 0;
 
-// ====================
-// CLUSTER
-// ====================
+// ------------------- CLUSTER CLASS -------------------
 class Cluster {
   constructor(text){
     this.text = text;
@@ -380,155 +368,126 @@ class Cluster {
     this.y = Math.random() * H;
     this.vx = (Math.random() - 0.5) * 0.6;
     this.vy = (Math.random() - 0.5) * 0.6;
-    this.mass = 80 + Math.random() * 180;
+    this.mass = 80 + Math.random() * 220;
     this.corrupt = 0;
     this.drag = false;
 
     this.el = document.createElement("div");
     this.el.className = "cluster";
     this.el.textContent = text;
-    this.el.style.fontFamily = fonts[Math.floor(Math.random()*fonts.length)];
     this.el.style.fontSize = (window.innerWidth < 768 ? 18 : 14) + "px";
-    this.el.style.maxWidth = window.innerWidth < 768 ? "80vw" : "300px";
-
+    this.el.style.maxWidth = (window.innerWidth < 768 ? "80vw" : "300px");
     document.body.appendChild(this.el);
+
     this.bind();
   }
 
   bind(){
-    this.el.addEventListener("mousedown", ()=>this.drag=true);
-    window.addEventListener("mouseup", ()=>this.drag=false);
-    window.addEventListener("mousemove", e=>{
-      if(this.drag){ this.x=e.clientX; this.y=e.clientY; }
-    });
+    this.el.onmousedown = ()=>{ this.drag = true; this.el.style.cursor = "grabbing"; };
+    window.onmouseup = ()=>{ this.drag = false; this.el.style.cursor = "grab"; };
+    window.onmousemove = e => { if(this.drag){ this.x = e.clientX; this.y = e.clientY; } };
 
-    this.el.addEventListener("touchstart", e=>{
-      this.drag=true; e.preventDefault();
-    });
-    window.addEventListener("touchend", ()=>this.drag=false);
-    window.addEventListener("touchmove", e=>{
+    this.el.ontouchstart = e => { e.preventDefault(); this.drag = true; };
+    window.ontouchend = ()=>{ this.drag = false; };
+    window.ontouchmove = e => {
       if(this.drag && e.touches[0]){
-        this.x=e.touches[0].clientX;
-        this.y=e.touches[0].clientY;
+        this.x = e.touches[0].clientX;
+        this.y = e.touches[0].clientY;
       }
-    }, {passive:false});
+    };
   }
 
-  update(others){
+  update(all){
     if(!this.drag){
       this.x += this.vx * speed;
       this.y += this.vy * speed;
     }
 
-    for(const o of others){
-      if(o===this) continue;
-      let dx=o.x-this.x, dy=o.y-this.y;
-      let d=Math.hypot(dx,dy)+0.1;
-      let f=(this.mass*o.mass)/(d*d*9000);
-      this.vx += f*dx/d;
-      this.vy += f*dy/d;
+    for(const other of all){
+      if(other !== this){
+        let dx = other.x - this.x;
+        let dy = other.y - this.y;
+        let d = Math.hypot(dx, dy) + 0.1;
 
-      if(d<90){
-        this.corrupt += 0.002;
-        bgCorruption += 0.00015;
+        let force = (this.mass * other.mass) / (d * d * 9000);
+        this.vx += force * dx / d;
+        this.vy += force * dy / d;
 
-        if(this.corrupt>0.6 && Math.random()<0.01){
-          this.el.classList.add("glitch");
-          this.el.textContent=this.text.split("")
-            .map(c=>Math.random()<0.12?String.fromCharCode(33+Math.random()*94):c)
-            .join("");
+        if(d < 90){
+          this.corrupt += 0.002;
+          if(this.corrupt > 0.6 && Math.random() < 0.01){
+            this.el.classList.add("glitch");
+            this.el.textContent = this.text.split("")
+              .map(c => Math.random() < 0.12
+                ? String.fromCharCode(33 + Math.random()*94)
+                : c
+              ).join("");
+          }
         }
       }
     }
 
-    // wrap écran
-    this.x = (this.x+W)%W;
-    this.y = (this.y+H)%H;
+    this.x = (this.x + W) % W;
+    this.y = (this.y + H) % H;
   }
 
   render(){
     this.el.style.transform = `translate(${this.x}px,${this.y}px)`;
-    this.el.style.opacity = Math.max(0.4, 1-this.corrupt);
+    this.el.style.opacity = Math.max(0.35, 1 - this.corrupt);
   }
 }
 
-// ====================
-// INIT
-// ====================
-for(let i=0;i<10;i++){
+// ------------------- CREATE -------------------
+let clusters = [];
+for(let i = 0; i < 10; i++){
   clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
 }
 
-// ====================
-// INTERACTIONS
-// ====================
-window.addEventListener("wheel", e=>{
-  speed += e.deltaY<0 ? 0.1 : -0.1;
-  speed = Math.max(0.2, Math.min(3, speed));
-});
-
-window.addEventListener("keydown", ()=>{
-  clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-});
-
-// ====================
-// SHAKE DETECTION
-// ====================
-let lastShake = 0;
-const SHAKE_THRESHOLD = 22;
-
-function handleMotion(e){
+// ------------------- SHAKE DETECTION -------------------
+window.addEventListener("devicemotion", e => {
   const a = e.accelerationIncludingGravity;
   if(!a) return;
-  const strength = Math.abs(a.x)+Math.abs(a.y)+Math.abs(a.z);
-  const now = Date.now();
+  let strength = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
+  let now = Date.now();
 
-  if(strength > SHAKE_THRESHOLD && now-lastShake>700){
-    lastShake = now;
-    clusters.push(new Cluster(
-      phrases[Math.floor(Math.random()*phrases.length)]
-    ));
+  if(strength > 22 && now - shakeCooldown > 800){
+    shakeCooldown = now;
+    clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
   }
-}
+});
 
-// iOS permission
-const motionBtn = document.getElementById("motionBtn");
-if(typeof DeviceMotionEvent !== "undefined" &&
-   typeof DeviceMotionEvent.requestPermission === "function"){
-  motionBtn.style.display="block";
-  motionBtn.onclick=()=>{
-    DeviceMotionEvent.requestPermission().then(res=>{
-      if(res==="granted"){
-        window.addEventListener("devicemotion", handleMotion);
-        motionBtn.style.display="none";
-      }
-    });
-  };
-} else {
-  window.addEventListener("devicemotion", handleMotion);
-}
+// ------------------- SPEED CONTROL (wheel) -------------------
+window.onwheel = e => {
+  speed += e.deltaY < 0 ? 0.1 : -0.1;
+  speed = Math.max(0.2, Math.min(2.5, speed));
+};
 
-// ====================
-// LOOP
-// ====================
+// ------------------- ADD CLUSTER (keyboard) -------------------
+window.onkeydown = () => {
+  clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+};
+
+// ------------------- BACKGROUND + LOOP -------------------
 function loop(){
-  ctx.fillStyle = `rgba(${6+bgCorruption*30},${6+bgCorruption*10},${12+bgCorruption*40},0.12)`;
+  bgTime += 0.002;
+  let r = Math.floor(7 + Math.sin(bgTime)*2);
+  let g = Math.floor(10 + Math.sin(bgTime*0.8)*3);
+  let b = Math.floor(14 + Math.cos(bgTime*1.1)*4);
+
+  ctx.fillStyle = `rgb(${r},${g},${b})`;
   ctx.fillRect(0,0,W,H);
 
-  clusters.forEach(c=>c.update(clusters));
-  clusters.forEach(c=>c.render());
-
+  clusters.forEach(c => c.update(clusters));
+  clusters.forEach(c => c.render());
   requestAnimationFrame(loop);
 }
 loop();
 
-// ====================
-// TITRE DYNAMIQUE
-// ====================
-const titlePhrases=[
+// ------------------- DYNAMIC TITLE -------------------
+const titlePhrases = [
+  "Ne te trompe pas de porte",
   "Tu es le paramètre",
   "Il n’y a pas de dernière ligne",
-  "La porte est toujours là",
-  "Ne te trompe pas de porte"
+  "La porte est toujours là"
 ];
 document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
