@@ -1,8 +1,8 @@
-// --- FONDS ---
 const body = document.body;
-const backgrounds = ['bg-black','bg-spectrale','bg-coldcode','bg-glitchmatrix'];
-const chosenBG = backgrounds[Math.floor(Math.random()*backgrounds.length)];
-body.classList.add(chosenBG);
+
+// --- Sélection aléatoire du fond à chaque visite ---
+const backgrounds = ['bg-black', 'bg-spectre', 'bg-coldcode', 'bg-glitchmatrix'];
+body.classList.add(backgrounds[Math.floor(Math.random()*backgrounds.length)]);
 
 // --- PHRASES ---
 const phrases = [
@@ -351,23 +351,18 @@ const phrases = [
 "La prochaine fois que tu hésiteras, la prochaine fois que tu obéiras, la prochaine fois que tu te diras « je n’ai pas le choix »; c’est là que l’Agence opère le mieux.",
 "Ne te trompe pas de porte, tu l’as déjà fait"
 
-  // ... toutes les autres phrases du fichier original
+  // ... ajoute toutes les phrases complètes ici
 ];
 
-// --- FONTS ---
 const fonts=["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
+let speed = 1, bgCorruption = 0;
 
-// --- CANVAS ---
-const canvas=document.getElementById('space');
-const ctx=canvas.getContext('2d');
 let W,H;
-function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
-window.onresize=resize;resize();
+function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+window.onresize = resize;
+resize();
 
-let speed=1, bgCorruption=0;
-
-// --- CLUSTERS ---
-class Cluster{
+class Cluster {
   constructor(text){
     this.text=text;
     this.x=Math.random()*W;
@@ -420,43 +415,43 @@ class Cluster{
     this.x=(this.x+W)%W; this.y=(this.y+H)%H;
     this.el.style.transform=`translate(${this.x}px,${this.y}px)`;
     this.el.style.opacity=Math.max(0.35,1-this.corrupt);
-    if(this.memory>0.4){this.el.style.filter='blur(0.5px)';}
+    if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
   }
 }
 
-// --- INITIAL CLUSTERS ---
 let clusters=[];
 for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
 
-// --- SPEED CONTROL ---
-window.onwheel=e=>{speed+=e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed));};
-window.onkeydown=e=>{clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));};
+// --- Ajout par molette ---
+window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed)); };
 
-// --- SHAKE (MOBILE) ---
-let lastAccel = {x:null, y:null, z:null};
-window.addEventListener('devicemotion', function(event){
-  const a = event.accelerationIncludingGravity;
+// --- Ajout par clavier ---
+window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
+
+// --- Ajout clusters par secousse (smartphone) ---
+let lastAccel = {x:null,y:null,z:null};
+window.addEventListener('devicemotion', e=>{
+  const a = e.accelerationIncludingGravity;
   if(lastAccel.x!==null){
-    const diff = Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
-    if(diff>25) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+    const delta = Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
+    if(delta>25){ clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); }
   }
-  lastAccel = {x:a.x, y:a.y, z:a.z};
+  lastAccel = a;
 });
 
-// --- LOOP ---
+// --- Loop ---
 function loop(){
-  ctx.fillStyle=`rgba(${6+bgCorruption*40},${6+bgCorruption*10},${10+bgCorruption*60},0.12)`;
-  ctx.fillRect(0,0,W,H);
+  // Fond dynamique selon version
+  if(body.classList.contains('bg-spectre')){
+    const intensity = Math.min(0.3, clusters.length/50 + bgCorruption*0.2);
+    body.style.background = `linear-gradient(135deg, rgba(10,12,32,${1-intensity}), rgba(26,28,64,${1-intensity}), rgba(42,44,96,${1-intensity}))`;
+  }
   clusters.forEach(c=>c.update(clusters));
   clusters.forEach(c=>c.render());
   requestAnimationFrame(loop);
 }
 loop();
 
-// --- TITRE DYNAMIQUE ---
+// --- Titre dynamique ---
 const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
-function updateTitle(){
-  document.title=titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
-}
-setInterval(updateTitle, 3500);
-updateTitle();
+document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
