@@ -1,57 +1,71 @@
-/* ————————— RESET & GLOBAL ————————— */
-* {
-  box-sizing: border-box;
-}
-
 html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  width: 100%;
-  height: 100%;
-  background: #07090c; /* fond sombre profond */
+  background: #040406; /* Fond noir uniforme de base */
   color: #e6e6e6;
-  touch-action: none;
+  font-family: "Arial", sans-serif;
+  touch-action: none; /* utile pour mobile drag */
 }
 
-/* ————————— CANVAS (fond animé) ————————— */
+/* CANVAS : couvre tout l'écran */
 #space {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   z-index: 0;
-  pointer-events: none;
 }
 
-/* ————————— CLUSTERS ————————— */
+/* CLUSTERS : base */
 .cluster {
   position: absolute;
-  padding: 8px 12px;
+  max-width: 300px;
+  padding: 10px 14px;
   border-radius: 6px;
   line-height: 1.35;
   user-select: none;
   cursor: grab;
-
-  color: #e6e6e6;
-  background: transparent;
-
-  mix-blend-mode: screen;
+  mix-blend-mode: screen; /* effet lumineux interactif */
+  transition: filter 0.4s ease, color 0.4s ease;
   z-index: 2;
-
-  transition:
-    filter 0.4s ease,
-    opacity 0.4s ease,
-    transform 0.3s ease;
+  font-size: 16px;
+  pointer-events: all;
 }
 
-/* cluster quand actif */
-.cluster:active {
-  cursor: grabbing;
-}
-
-/* glitch visuel */
+/* CLUSTER EN GLITCH / CORRUPTION */
 .cluster.glitch {
   font-family: monospace;
-  filter: contrast(1.4) brightness(1.2);
+  filter: contrast(1.3) blur(0.3px);
+  color: rgba(255,255,255,0.9);
+}
+
+/* Effets visuels selon l'état de corruption */
+.cluster[data-corrupt="1"] {
+  filter: blur(0.5px) contrast(1.2);
+  color: rgba(255,255,255,0.8);
+}
+
+/* Mobile-friendly */
+@media (max-width: 768px) {
+  .cluster {
+    max-width: 220px;
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+}
+
+/* Animations discrètes du fond */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(4,4,6,0.3), rgba(10,10,20,0.3));
+  z-index: 1;
+  pointer-events: none;
+  animation: subtleShift 60s linear infinite;
+}
+
+@keyframes subtleShift {
+  0% { background-position: 0 0; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0 0; }
 }
