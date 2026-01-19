@@ -1,0 +1,32 @@
+html, body {
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:#040406;
+  color:#e6e6e6;
+  height:100%;
+  touch-action: none; /* pour éviter le scroll */
+}
+
+#space {
+  position:fixed;
+  inset:0;
+}
+
+.cluster {
+  position:absolute;
+  max-width:180px; /* plus petit pour mobile */
+  padding:6px 10px;
+  border-radius:6px;
+  line-height:1.3;
+  font-size:14px; /* lisible sur mobile */
+  user-select:none;
+  cursor:grab;
+  mix-blend-mode:screen;
+  transition:filter 0.3s ease, color 0.3s ease;
+}
+
+.cluster.glitch {
+  font-family:monospace;
+  filter:contrast(1.3);
+}
