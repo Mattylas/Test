@@ -2,70 +2,58 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: #040406; /* Fond noir uniforme de base */
-  color: #e6e6e6;
   font-family: "Arial", sans-serif;
-  touch-action: none; /* utile pour mobile drag */
+  touch-action: none;
 }
 
-/* CANVAS : couvre tout l'écran */
 #space {
   position: fixed;
   inset: 0;
   z-index: 0;
 }
 
-/* CLUSTERS : base */
 .cluster {
   position: absolute;
-  max-width: 300px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 6px;
   line-height: 1.35;
   user-select: none;
   cursor: grab;
-  mix-blend-mode: screen; /* effet lumineux interactif */
+  mix-blend-mode: screen;
   transition: filter 0.4s ease, color 0.4s ease;
   z-index: 2;
   font-size: 16px;
   pointer-events: all;
+  max-width: 280px;
 }
 
-/* CLUSTER EN GLITCH / CORRUPTION */
 .cluster.glitch {
   font-family: monospace;
   filter: contrast(1.3) blur(0.3px);
   color: rgba(255,255,255,0.9);
 }
 
-/* Effets visuels selon l'état de corruption */
-.cluster[data-corrupt="1"] {
-  filter: blur(0.5px) contrast(1.2);
-  color: rgba(255,255,255,0.8);
-}
-
-/* Mobile-friendly */
+/* MOBILE */
 @media (max-width: 768px) {
-  .cluster {
-    max-width: 220px;
-    font-size: 14px;
-    padding: 8px 10px;
-  }
+  .cluster { max-width: 180px; font-size: 14px; padding: 6px 8px; }
 }
 
-/* Animations discrètes du fond */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(120deg, rgba(4,4,6,0.3), rgba(10,10,20,0.3));
-  z-index: 1;
-  pointer-events: none;
-  animation: subtleShift 60s linear infinite;
-}
+/* FONDS */
+.bg-black { background: #040406; }
+.bg-spectrale { background: linear-gradient(135deg, #0a0c20, #2d2f5e, #5c5c8a); background-size: 300% 300%; animation: bgShift 60s infinite linear; }
+.bg-coldcode { background: linear-gradient(90deg, #001100, #003300, #001100); background-size: 300% 300%; animation: bgShift 80s infinite linear; }
+.bg-glitchmatrix { background: #010101; animation: glitchBG 0.1s infinite; }
 
-@keyframes subtleShift {
+@keyframes bgShift {
   0% { background-position: 0 0; }
   50% { background-position: 100% 100%; }
   100% { background-position: 0 0; }
+}
+
+@keyframes glitchBG {
+  0% { background-color: #010101; }
+  25% { background-color: #111111; }
+  50% { background-color: #010101; }
+  75% { background-color: #222222; }
+  100% { background-color: #010101; }
 }
