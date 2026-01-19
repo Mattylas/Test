@@ -2,58 +2,49 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: "Arial", sans-serif;
-  touch-action: none;
-}
-
-#space {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+  color: #e6e6e6;
+  font-family: sans-serif;
 }
 
 .cluster {
   position: absolute;
-  padding: 8px 12px;
+  max-width: 300px;
+  padding: 10px 14px;
   border-radius: 6px;
   line-height: 1.35;
   user-select: none;
   cursor: grab;
   mix-blend-mode: screen;
   transition: filter 0.4s ease, color 0.4s ease;
-  z-index: 2;
-  font-size: 16px;
-  pointer-events: all;
-  max-width: 280px;
 }
 
 .cluster.glitch {
   font-family: monospace;
-  filter: contrast(1.3) blur(0.3px);
-  color: rgba(255,255,255,0.9);
-}
-
-/* MOBILE */
-@media (max-width: 768px) {
-  .cluster { max-width: 180px; font-size: 14px; padding: 6px 8px; }
+  filter: contrast(1.3);
 }
 
 /* FONDS */
 .bg-black { background: #040406; }
-.bg-spectrale { background: linear-gradient(135deg, #0a0c20, #2d2f5e, #5c5c8a); background-size: 300% 300%; animation: bgShift 60s infinite linear; }
-.bg-coldcode { background: linear-gradient(90deg, #001100, #003300, #001100); background-size: 300% 300%; animation: bgShift 80s infinite linear; }
-.bg-glitchmatrix { background: #010101; animation: glitchBG 0.1s infinite; }
-
-@keyframes bgShift {
-  0% { background-position: 0 0; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0 0; }
+.bg-spectre { 
+  background: linear-gradient(135deg, #0a0c20, #1a1c40, #2a2c60); 
+  background-size: 300% 300%; 
+  animation: bgSpectreShift 80s infinite linear;
+}
+.bg-coldcode {
+  background: linear-gradient(120deg, #0f1115, #101320, #161926);
+}
+.bg-glitchmatrix {
+  background: radial-gradient(circle at center, #000 0%, #0f0 80%);
+  animation: glitchMatrixShift 60s infinite linear;
 }
 
-@keyframes glitchBG {
-  0% { background-color: #010101; }
-  25% { background-color: #111111; }
-  50% { background-color: #010101; }
-  75% { background-color: #222222; }
-  100% { background-color: #010101; }
+@keyframes bgSpectreShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+@keyframes glitchMatrixShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
 }
