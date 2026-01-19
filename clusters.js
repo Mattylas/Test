@@ -1,5 +1,12 @@
+// --- FONDS ---
+const body = document.body;
+const backgrounds = ['bg-black','bg-spectrale','bg-coldcode','bg-glitchmatrix'];
+const chosenBG = backgrounds[Math.floor(Math.random()*backgrounds.length)];
+body.classList.add(chosenBG);
+
+// --- PHRASES ---
 const phrases = [
-  "La continuité n’est pas ce qui reste identique",
+"La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
 "Chaque mot que tu lis est évalué",
 "Tu es devenu le paramètre",
@@ -344,20 +351,22 @@ const phrases = [
 "La prochaine fois que tu hésiteras, la prochaine fois que tu obéiras, la prochaine fois que tu te diras « je n’ai pas le choix »; c’est là que l’Agence opère le mieux.",
 "Ne te trompe pas de porte, tu l’as déjà fait"
 
-  // ... tu peux ajouter toutes les phrases de ton projet ici
+  // ... toutes les autres phrases du fichier original
 ];
 
+// --- FONTS ---
 const fonts=["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
 
+// --- CANVAS ---
 const canvas=document.getElementById('space');
 const ctx=canvas.getContext('2d');
 let W,H;
 function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
 window.onresize=resize;resize();
 
-let speed=1;
-let bgCorruption=0;
+let speed=1, bgCorruption=0;
 
+// --- CLUSTERS ---
 class Cluster{
   constructor(text){
     this.text=text;
@@ -394,7 +403,6 @@ class Cluster{
         const d=Math.hypot(dx,dy)+0.1;
         const force=(this.mass*c.mass)/(d*d*7000);
         this.vx+=force*dx/d; this.vy+=force*dy/d;
-
         if(d<90){
           this.corrupt+=0.0015;
           this.memory+=0.0008;
@@ -412,37 +420,30 @@ class Cluster{
     this.x=(this.x+W)%W; this.y=(this.y+H)%H;
     this.el.style.transform=`translate(${this.x}px,${this.y}px)`;
     this.el.style.opacity=Math.max(0.35,1-this.corrupt);
-    if(this.memory>0.4){this.el.dataset.corrupt="1";}
+    if(this.memory>0.4){this.el.style.filter='blur(0.5px)';}
   }
 }
 
+// --- INITIAL CLUSTERS ---
 let clusters=[];
 for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
 
-window.onwheel=e=>{
-  speed+=e.deltaY<0?0.1:-0.1;
-  speed=Math.max(0.2,Math.min(3,speed));
-};
+// --- SPEED CONTROL ---
+window.onwheel=e=>{speed+=e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed));};
+window.onkeydown=e=>{clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));};
 
-window.onkeydown=e=>{
-  clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-};
-
-// Détection secouage pour mobile
-let lastX,lastY,lastTime;
-window.addEventListener("devicemotion", e=>{
-  const acc = e.accelerationIncludingGravity;
-  const now = Date.now();
-  if(!lastX){lastX=acc.x; lastY=acc.y; lastTime=now; return;}
-  const dx = acc.x-lastX, dy=acc.y-lastY;
-  const dt = now-lastTime;
-  const speedMotion = Math.sqrt(dx*dx+dy*dy)/dt*10000;
-  if(speedMotion>15){
-    clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+// --- SHAKE (MOBILE) ---
+let lastAccel = {x:null, y:null, z:null};
+window.addEventListener('devicemotion', function(event){
+  const a = event.accelerationIncludingGravity;
+  if(lastAccel.x!==null){
+    const diff = Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
+    if(diff>25) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
   }
-  lastX=acc.x; lastY=acc.y; lastTime=now;
+  lastAccel = {x:a.x, y:a.y, z:a.z};
 });
 
+// --- LOOP ---
 function loop(){
   ctx.fillStyle=`rgba(${6+bgCorruption*40},${6+bgCorruption*10},${10+bgCorruption*60},0.12)`;
   ctx.fillRect(0,0,W,H);
@@ -452,6 +453,10 @@ function loop(){
 }
 loop();
 
-// TITRE dynamique
+// --- TITRE DYNAMIQUE ---
 const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
-setInterval(()=>{document.title=titlePhrases[Math.floor(Math.random()*titlePhrases.length)];}, 4000);
+function updateTitle(){
+  document.title=titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
+}
+setInterval(updateTitle, 3500);
+updateTitle();
