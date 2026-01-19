@@ -1,5 +1,9 @@
-// ====================
-// PHRASES
+document.body.style.background = "#040406";
+document.body.insertAdjacentHTML(
+  "beforeend",
+  "<div style='position:fixed;top:20px;left:20px;z-index:10'>TEST</div>"
+);
+
 // ====================
 const phrases = [
   "La continuité n’est pas ce qui reste identique",
