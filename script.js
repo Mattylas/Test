@@ -1,4 +1,4 @@
-// ------------------- PHRASES -------------------
+// --- CONFIGURATION DES PHRASES ---
 const phrases = [
   "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
@@ -345,149 +345,168 @@ const phrases = [
 "La prochaine fois que tu hésiteras, la prochaine fois que tu obéiras, la prochaine fois que tu te diras « je n’ai pas le choix »; c’est là que l’Agence opère le mieux.",
 "Ne te trompe pas de porte, tu l’as déjà fait"
 
+  // ... continue avec toutes les phrases que tu veux
 ];
 
-// ------------------- CANVAS -------------------
-const canvas = document.getElementById("space");
-const ctx = canvas.getContext("2d");
-let W, H;
+const fonts = ["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
+
+// --- INITIALISATION DU CANVAS ---
+const canvas = document.getElementById('space');
+const ctx = canvas.getContext('2d');
+let W,H;
 function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
-window.onresize = resize;
-resize();
+window.onresize = resize; resize();
 
-// ------------------- GLOBALS -------------------
-let speed = 0.7;
-let bgTime = 0;
-let shakeCooldown = 0;
+// --- CONFIGURATION ---
+let speed = 1;
+let bgCorruption = 0;
+const backgrounds = ["spectral","cold-code","glitch-matrix"];
+let currentBg = backgrounds[Math.floor(Math.random()*backgrounds.length)];
 
-// ------------------- CLUSTER CLASS -------------------
-class Cluster {
+// --- CLUSTER CLASS ---
+class Cluster{
   constructor(text){
     this.text = text;
-    this.x = Math.random() * W;
-    this.y = Math.random() * H;
-    this.vx = (Math.random() - 0.5) * 0.6;
-    this.vy = (Math.random() - 0.5) * 0.6;
-    this.mass = 80 + Math.random() * 220;
+    this.x = Math.random()*W;
+    this.y = Math.random()*H;
+    this.vx = (Math.random()-0.5)*0.8;
+    this.vy = (Math.random()-0.5)*0.8;
+    this.mass = 80+Math.random()*220;
+    this.font = fonts[Math.floor(Math.random()*fonts.length)];
     this.corrupt = 0;
+    this.memory = 0;
     this.drag = false;
 
-    this.el = document.createElement("div");
-    this.el.className = "cluster";
+    this.el = document.createElement('div');
+    this.el.className = 'cluster';
     this.el.textContent = text;
-    this.el.style.fontSize = (window.innerWidth < 768 ? 18 : 14) + "px";
-    this.el.style.maxWidth = (window.innerWidth < 768 ? "80vw" : "300px");
+    this.el.style.fontFamily = this.font;
     document.body.appendChild(this.el);
 
     this.bind();
   }
 
   bind(){
-    this.el.onmousedown = ()=>{ this.drag = true; this.el.style.cursor = "grabbing"; };
-    window.onmouseup = ()=>{ this.drag = false; this.el.style.cursor = "grab"; };
-    window.onmousemove = e => { if(this.drag){ this.x = e.clientX; this.y = e.clientY; } };
-
-    this.el.ontouchstart = e => { e.preventDefault(); this.drag = true; };
-    window.ontouchend = ()=>{ this.drag = false; };
-    window.ontouchmove = e => {
-      if(this.drag && e.touches[0]){
-        this.x = e.touches[0].clientX;
-        this.y = e.touches[0].clientY;
-      }
-    };
+    this.el.onmousedown = ()=>{ this.drag=true; this.el.style.cursor='grabbing'; };
+    window.onmouseup = ()=>{ this.drag=false; this.el.style.cursor='grab'; };
+    window.onmousemove = e=>{ if(this.drag){ this.x=e.clientX; this.y=e.clientY; } };
   }
 
-  update(all){
-    if(!this.drag){
-      this.x += this.vx * speed;
-      this.y += this.vy * speed;
-    }
+  update(clusters){
+    if(!this.drag){ this.x += this.vx*speed; this.y += this.vy*speed; }
+    
+    // Interaction avec les autres clusters
+    for(const c of clusters){
+      if(c!==this){
+        const dx = c.x-this.x, dy = c.y-this.y;
+        const d = Math.hypot(dx,dy)+0.1;
+        const force = (this.mass*c.mass)/(d*d*7000);
+        this.vx += force*dx/d; this.vy += force*dy/d;
 
-    for(const other of all){
-      if(other !== this){
-        let dx = other.x - this.x;
-        let dy = other.y - this.y;
-        let d = Math.hypot(dx, dy) + 0.1;
-
-        let force = (this.mass * other.mass) / (d * d * 9000);
-        this.vx += force * dx / d;
-        this.vy += force * dy / d;
-
-        if(d < 90){
-          this.corrupt += 0.002;
-          if(this.corrupt > 0.6 && Math.random() < 0.01){
-            this.el.classList.add("glitch");
-            this.el.textContent = this.text.split("")
-              .map(c => Math.random() < 0.12
-                ? String.fromCharCode(33 + Math.random()*94)
-                : c
-              ).join("");
+        // Corruption si trop proches
+        if(d<90){
+          this.corrupt += 0.0015;
+          this.memory += 0.0008;
+          bgCorruption += 0.00015;
+          if(this.corrupt>0.6 && Math.random()<0.01){
+            this.el.classList.add('glitch');
+            this.el.textContent = this.text.split('').map(c=>Math.random()<0.15?String.fromCharCode(33+Math.random()*94):c).join('');
           }
         }
       }
     }
-
-    this.x = (this.x + W) % W;
-    this.y = (this.y + H) % H;
   }
 
   render(){
+    this.x = (this.x+W)%W; this.y = (this.y+H)%H;
     this.el.style.transform = `translate(${this.x}px,${this.y}px)`;
-    this.el.style.opacity = Math.max(0.35, 1 - this.corrupt);
+    this.el.style.opacity = Math.max(0.35,1-this.corrupt);
+    if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
   }
 }
 
-// ------------------- CREATE -------------------
+// --- CLUSTERS INIT ---
 let clusters = [];
-for(let i = 0; i < 10; i++){
-  clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+
+// --- FUSION NARRATIVE ---
+function checkFusion(){
+  for(let i=0;i<clusters.length;i++){
+    for(let j=i+1;j<clusters.length;j++){
+      let a = clusters[i], b = clusters[j];
+      let dx = a.x-b.x, dy = a.y-b.y;
+      if(Math.hypot(dx,dy)<90){
+        if(Math.random()<0.005){
+          let newText = a.text.split("").map((c,k)=>Math.random()<0.5?c:b.text[k]||"").join("");
+          clusters.push(new Cluster(newText));
+        }
+      }
+    }
+  }
 }
 
-// ------------------- SHAKE DETECTION -------------------
-window.addEventListener("devicemotion", e => {
-  const a = e.accelerationIncludingGravity;
-  if(!a) return;
-  let strength = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
-  let now = Date.now();
-
-  if(strength > 22 && now - shakeCooldown > 800){
-    shakeCooldown = now;
-    clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+// --- DESSIN DES FONDS ---
+function drawBackground(){
+  if(currentBg==="spectral"){
+    ctx.fillStyle = "rgba(5,5,15,0.12)";
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = `rgba(${50+Math.random()*100},${50+Math.random()*100},255,0.08)`;
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      ctx.moveTo(Math.random()*W,0);
+      ctx.lineTo(Math.random()*W,H);
+      ctx.stroke();
+    }
+  } else if(currentBg==="cold-code"){
+    ctx.fillStyle="rgba(0,0,0,0.2)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#0f0";
+    ctx.font = "16px monospace";
+    for(let i=0;i<30;i++){
+      let char=String.fromCharCode(33+Math.floor(Math.random()*94));
+      ctx.fillText(char, Math.random()*W, Math.random()*H);
+    }
+  } else if(currentBg==="glitch-matrix"){
+    ctx.fillStyle = "rgba(10,10,10,0.15)";
+    ctx.fillRect(0,0,W,H);
+    for(let i=0;i<300;i++){
+      ctx.fillStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.05)`;
+      ctx.fillRect(Math.random()*W, Math.random()*H, 2+Math.random()*3, 2+Math.random()*3);
+    }
   }
-});
+}
 
-// ------------------- SPEED CONTROL (wheel) -------------------
-window.onwheel = e => {
-  speed += e.deltaY < 0 ? 0.1 : -0.1;
-  speed = Math.max(0.2, Math.min(2.5, speed));
-};
-
-// ------------------- ADD CLUSTER (keyboard) -------------------
-window.onkeydown = () => {
-  clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-};
-
-// ------------------- BACKGROUND + LOOP -------------------
+// --- BOUCLE PRINCIPALE ---
 function loop(){
-  bgTime += 0.002;
-  let r = Math.floor(7 + Math.sin(bgTime)*2);
-  let g = Math.floor(10 + Math.sin(bgTime*0.8)*3);
-  let b = Math.floor(14 + Math.cos(bgTime*1.1)*4);
-
-  ctx.fillStyle = `rgb(${r},${g},${b})`;
-  ctx.fillRect(0,0,W,H);
-
-  clusters.forEach(c => c.update(clusters));
-  clusters.forEach(c => c.render());
+  drawBackground();
+  clusters.forEach(c=>c.update(clusters));
+  clusters.forEach(c=>c.render());
+  checkFusion();
   requestAnimationFrame(loop);
 }
 loop();
 
-// ------------------- DYNAMIC TITLE -------------------
-const titlePhrases = [
-  "Ne te trompe pas de porte",
-  "Tu es le paramètre",
-  "Il n’y a pas de dernière ligne",
-  "La porte est toujours là"
-];
-document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
+// --- INTERACTIONS ---
+window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed = Math.max(0.2,Math.min(3,speed)); };
+window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
+
+// --- SHAKE POUR MOBILE ---
+let lastAccel = {x:null,y:null,z:null};
+window.addEventListener('devicemotion', e=>{
+  let a = e.accelerationIncludingGravity;
+  if(lastAccel.x!==null){
+    let delta = Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
+    if(delta>30){ // seuil de secousse
+      clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+    }
+  }
+  lastAccel = a;
+});
+
+// --- TITRE DYNAMIQUE ---
+const titlePhrases = ["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
+function updateTitle(){
+  document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
+}
+setInterval(updateTitle, 2500);
+updateTitle();
