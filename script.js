@@ -1,16 +1,17 @@
 window.addEventListener("DOMContentLoaded", () => {
 
-const canvas = document.getElementById("space");
-const ctx = canvas.getContext("2d");
-let W, H;
-function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
-window.onresize = resize; resize();
+  // === CANVAS ===
+  const canvas = document.getElementById("space");
+  const ctx = canvas.getContext("2d");
+  let W, H;
+  function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+  window.onresize = resize; resize();
 
-let speed = 1;
-let bgCorruption = 0;
+  // === VARIABLES ===
+  let speed = 1;
+  let bgCorruption = 0;
 
-// === PHRASES ===
-const phrases = [
+  const phrases = [
 "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
 "Chaque mot que tu lis est évalué",
@@ -424,11 +425,12 @@ const phrases = [
 "Et dans la foule, j’ai entendu",
 "Un nom que personne n’a prononcé"
 
-];
-const fonts = ["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
+  ];
 
-// === TITRES DYNAMIQUES ===
-const titlePhrases = [
+  const fonts = ["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
+
+  // === TITRES DYNAMIQUES ===
+  const titlePhrases = [
 "Ne te trompe pas de porte",
 "Tu es le paramètre",
 "Il n’y a pas de dernière ligne",
@@ -437,95 +439,104 @@ const titlePhrases = [
 "Et dans la foule, j’ai entendu",
 "Un nom que personne n’a prononcé",
 "La porte est toujours là"
-];
-document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
+  ];
+  document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
 
-// === CLUSTER CLASS ===
-class Cluster {
-  constructor(text){
-    this.text = text;
-    this.x = Math.random()*W;
-    this.y = Math.random()*H;
-    this.vx = (Math.random()-.5)*0.8;
-    this.vy = (Math.random()-.5)*0.8;
-    this.mass = 80 + Math.random()*220;
-    this.font = fonts[Math.floor(Math.random()*fonts.length)];
-    this.corrupt = 0;
-    this.memory = 0;
-    this.drag = false;
-    this.el = document.createElement('div');
-    this.el.className = 'cluster';
-    this.el.textContent = text;
-    this.el.style.fontFamily = this.font;
-    document.body.appendChild(this.el);
-    this.bind();
-  }
+  // === CLUSTER CLASS ===
+  class Cluster {
+    constructor(text){
+      this.text = text;
+      this.x = Math.random()*W;
+      this.y = Math.random()*H;
+      this.vx = (Math.random()-.5)*0.8;
+      this.vy = (Math.random()-.5)*0.8;
+      this.mass = 80 + Math.random()*220;
+      this.font = fonts[Math.floor(Math.random()*fonts.length)];
+      this.corrupt = 0;
+      this.memory = 0;
+      this.drag = false;
+      this.el = document.createElement('div');
+      this.el.className = 'cluster';
+      this.el.textContent = text;
+      this.el.style.fontFamily = this.font;
+      document.body.appendChild(this.el);
+      this.bind();
+    }
 
-  bind(){
-    this.el.onmousedown = () => { this.drag = true; this.el.style.cursor='grabbing'; };
-    window.onmouseup = () => { this.drag = false; this.el.style.cursor='grab'; };
-    window.onmousemove = e => { if(this.drag){ this.x = e.clientX; this.y = e.clientY; } };
-  }
+    bind(){
+      this.el.onmousedown = () => { this.drag = true; this.el.style.cursor='grabbing'; };
+      window.onmouseup = () => { this.drag = false; this.el.style.cursor='grab'; };
+      window.onmousemove = e => { if(this.drag){ this.x = e.clientX; this.y = e.clientY; } };
+      // Touch pour mobile
+      this.el.ontouchstart = e => { e.preventDefault(); this.drag = true; };
+      this.el.ontouchend = e => { e.preventDefault(); this.drag = false; };
+      this.el.ontouchmove = e => { if(this.drag){ this.x = e.touches[0].clientX; this.y = e.touches[0].clientY; } };
+    }
 
-  update(clusters){
-    if(!this.drag){ this.x += this.vx*speed; this.y += this.vy*speed; }
+    update(clusters){
+      if(!this.drag){ this.x += this.vx*speed; this.y += this.vy*speed; }
 
-    for(const c of clusters){
-      if(c!==this){
-        const dx=c.x-this.x, dy=c.y-this.y;
-        const d=Math.hypot(dx,dy)+0.1;
-        const force=(this.mass*c.mass)/(d*d*7000);
-        this.vx += force*dx/d; this.vy += force*dy/d;
-        if(d<90){
-          this.corrupt += 0.0015;
-          this.memory += 0.0008;
-          bgCorruption += 0.00015;
-          if(this.corrupt>0.6 && Math.random()<0.01){
-            this.el.classList.add('glitch');
-            this.el.textContent = this.text.split('').map(ch => Math.random()<0.15?String.fromCharCode(33+Math.random()*94):ch).join('');
+      for(const c of clusters){
+        if(c!==this){
+          const dx=c.x-this.x, dy=c.y-this.y;
+          const d=Math.hypot(dx,dy)+0.1;
+          const force=(this.mass*c.mass)/(d*d*7000);
+          this.vx += force*dx/d; this.vy += force*dy/d;
+
+          // Interaction / corruption
+          if(d<90){
+            this.corrupt += 0.0015;
+            this.memory += 0.0008;
+            bgCorruption += 0.00015;
+            if(this.corrupt>0.6 && Math.random()<0.01){
+              this.el.classList.add('glitch');
+              this.el.textContent = this.text.split('').map(ch => Math.random()<0.15?String.fromCharCode(33+Math.random()*94):ch).join('');
+            }
           }
         }
       }
     }
+
+    render(){
+      // Wrap écran
+      this.x = (this.x+W)%W; this.y = (this.y+H)%H;
+      this.el.style.transform = `translate(${this.x}px,${this.y}px)`;
+      this.el.style.opacity = Math.max(0.35, 1-this.corrupt);
+      if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
+    }
   }
 
-  render(){
-    this.x = (this.x+W)%W; this.y = (this.y+H)%H;
-    this.el.style.transform = `translate(${this.x}px,${this.y}px)`;
-    this.el.style.opacity = Math.max(0.35, 1-this.corrupt);
-    if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
+  // === INIT CLUSTERS ===
+  let clusters=[];
+  for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+
+  // === INTERACTIONS ===
+  window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed = Math.max(0.2,Math.min(3,speed)); };
+  window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
+
+  // Mobile shake pour ajouter cluster
+  let lastX=0,lastY=0,lastZ=0, lastTime=0;
+  window.addEventListener('devicemotion', e=>{
+    const {x,y,z} = e.accelerationIncludingGravity;
+    const now = Date.now();
+    if(now - lastTime > 300){
+      const delta = Math.abs(x-lastX)+Math.abs(y-lastY)+Math.abs(z-lastZ);
+      if(delta>30) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+      lastX=x; lastY=y; lastZ=z; lastTime=now;
+    }
+  });
+
+  // === LOOP ===
+  function loop(){
+    // Fond noir dynamique
+    const r = 6+bgCorruption*40, g=6+bgCorruption*10, b=10+bgCorruption*60;
+    ctx.fillStyle=`rgba(${r},${g},${b},0.12)`;
+    ctx.fillRect(0,0,W,H);
+
+    clusters.forEach(c=>c.update(clusters));
+    clusters.forEach(c=>c.render());
+    requestAnimationFrame(loop);
   }
-}
-
-// === INIT CLUSTERS ===
-let clusters=[];
-for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-
-// === INTERACTIONS ===
-window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed = Math.max(0.2,Math.min(3,speed)); };
-window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
-
-// Mobile shake pour ajouter cluster
-let lastX=0,lastY=0,lastZ=0, lastTime=0;
-window.addEventListener('devicemotion', e=>{
-  const {x,y,z} = e.accelerationIncludingGravity;
-  const now = Date.now();
-  if(now - lastTime > 300){
-    const delta = Math.abs(x-lastX)+Math.abs(y-lastY)+Math.abs(z-lastZ);
-    if(delta>30) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-    lastX=x; lastY=y; lastZ=z; lastTime=now;
-  }
-});
-
-// === LOOP ===
-function loop(){
-  // Fond noir légèrement corrompu
-  ctx.fillStyle=`rgba(${6+bgCorruption*40},${6+bgCorruption*10},${10+bgCorruption*60},0.12)`;
-  ctx.fillRect(0,0,W,H);
-  clusters.forEach(c=>c.update(clusters));
-  clusters.forEach(c=>c.render());
-  requestAnimationFrame(loop);
-}
-loop();
+  loop();
 
 });
