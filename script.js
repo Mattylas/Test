@@ -1,7 +1,7 @@
-const body = document.body;
-//const canvas = document.createElement("canvas");
-//document.body.appendChild(canvas);
-
+/* =========================
+   CANVAS DE FOND
+========================= */
+const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
 
 function resize() {
@@ -11,20 +11,25 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-canvas.style.position = "fixed";
-canvas.style.inset = "0";
-canvas.style.zIndex = "0";
-canvas.style.pointerEvents = "none";
+let t = 0;
 
-// --- Fond aléatoire ---
-const backgrounds = ['bg-black','bg-spectre','bg-coldcode','bg-glitchmatrix'];
-body.classList.add(backgrounds[Math.floor(Math.random()*backgrounds.length)]);
+function backgroundLoop() {
+  t += 0.005;
 
-let W,H;
-function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
-window.onresize = resize; resize();
+  const g = Math.floor(20 + 10 * Math.sin(t));
+  ctx.fillStyle = `rgb(${g},${g},${g+10})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-const phrases = [
+  requestAnimationFrame(backgroundLoop);
+}
+backgroundLoop();
+
+/* =========================
+   CLUSTERS TEXTE
+========================= */
+const container = document.getElementById("clusters");
+
+const words = [
 "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
 "Chaque mot que tu lis est évalué",
@@ -438,126 +443,27 @@ const phrases = [
 "Et dans la foule, j’ai entendu",
 "Un nom que personne n’a prononcé"
 
-  // ... ajoute toutes les phrases ici
 ];
 
-const fonts=["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
-let speed=1,bgCorruption=0;
+function createCluster() {
+  const el = document.createElement("div");
+  el.className = "cluster";
+  el.textContent = words[Math.floor(Math.random() * words.length)];
 
-class Cluster {
-  constructor(text){
-    this.text=text;
-    this.x=Math.random()*W;
-    this.y=Math.random()*H;
-    this.vx=(Math.random()-.5)*0.8;
-    this.vy=(Math.random()-.5)*0.8;
-    this.mass=80+Math.random()*220;
-    this.font=fonts[Math.floor(Math.random()*fonts.length)];
-    this.corrupt=0;
-    this.memory=0;
-    this.drag=false;
-    this.el=document.createElement('div');
-    this.el.className='cluster';
-    this.el.textContent=text;
-    this.el.style.fontFamily=this.font;
-    document.body.appendChild(this.el);
-    this.bind();
-  }
+  el.style.left = Math.random() * 100 + "vw";
+  el.style.top = 100 + Math.random() * 40 + "vh";
+  el.style.animationDuration = 15 + Math.random() * 20 + "s";
+  el.style.opacity = 0.5 + Math.random() * 0.5;
 
-  bind(){
-    // Drag souris + touch
-    const startDrag=(x,y)=>{ this.drag=true; this.el.style.cursor='grabbing'; this.x=x; this.y=y; }
-    const endDrag=()=>{ this.drag=false; this.el.style.cursor='grab'; }
+  container.appendChild(el);
 
-    this.el.addEventListener('mousedown',e=>startDrag(e.clientX,e.clientY));
-    this.el.addEventListener('touchstart',e=>{
-      const t=e.touches[0]; startDrag(t.clientX,t.clientY);
-    },{passive:false});
-
-    window.addEventListener('mouseup',endDrag);
-    window.addEventListener('touchend',endDrag);
-
-    window.addEventListener('mousemove',e=>{ if(this.drag){this.x=e.clientX; this.y=e.clientY;} });
-    window.addEventListener('touchmove',e=>{
-      if(this.drag){
-        const t=e.touches[0];
-        this.x=t.clientX; this.y=t.clientY;
-      }
-    },{passive:false});
-  }
-
-  update(clusters){
-    if(!this.drag){ this.x+=this.vx*speed; this.y+=this.vy*speed; }
-
-    clusters.forEach(c=>{
-      if(c!==this){
-        const dx=c.x-this.x, dy=c.y-this.y;
-        const d=Math.hypot(dx,dy)+0.1;
-        const force=(this.mass*c.mass)/(d*d*7000);
-        this.vx+=force*dx/d; this.vy+=force*dy/d;
-
-        if(d<90){
-          this.corrupt+=0.002;
-          this.memory+=0.001;
-          bgCorruption+=0.0002;
-          if(this.corrupt>0.6 && Math.random()<0.015){
-            this.el.classList.add('glitch');
-            this.el.textContent=this.text.split('').map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join('');
-          }
-        }
-      }
-    });
-  }
-
-  render(){
-    this.x=(this.x+W)%W; this.y=(this.y+H)%H;
-    this.el.style.transform=`translate(${this.x}px,${this.y}px)`;
-    this.el.style.opacity=Math.max(0.35,1-this.corrupt);
-    if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
-  }
+  setTimeout(() => el.remove(), 40000);
 }
 
-let clusters=[];
-for(let i=0;i<8;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-
-// Molette
-window.onwheel=e=>{ speed+=e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed)); };
-// Clavier
-window.onkeydown=e=>{ clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
-// Secousse mobile
-let lastAccel={x:null,y:null,z:null};
-window.addEventListener('devicemotion',e=>{
-  const a=e.accelerationIncludingGravity;
-  if(lastAccel.x!==null){
-    const delta=Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
-    if(delta>25) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
-  }
-  lastAccel=a;
-});
-
-// Loop
-function loop() {
-  ctx.fillStyle = "rgba(10, 12, 20, 0.05)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(canvas.width/2, canvas.height/2, 4, 0, Math.PI*2);
-  ctx.fill();
-
-  requestAnimationFrame(loop);
+// clusters initiaux
+for (let i = 0; i < 15; i++) {
+  setTimeout(createCluster, i * 400);
 }
-loop();
-// Titre dynamique
-const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
-document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
 
-//
-
-const test = document.createElement("div");
-test.className = "cluster";
-test.textContent = "Le texte existe.";
-test.style.left = "20px";
-test.style.top = "20px";
-document.body.appendChild(test);
-
+// clusters continus
+setInterval(createCluster, 1500);
