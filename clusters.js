@@ -3,6 +3,7 @@ const canvas = document.createElement('canvas');
 canvas.id = 'background';
 document.body.prepend(canvas); // ⚠️ IMPORTANT
 const ctx = canvas.getContext('2d', { alpha: true });
+document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
 
 // --- Fond aléatoire ---
 const backgrounds = ['bg-black','bg-spectre','bg-coldcode','bg-glitchmatrix'];
