@@ -1,48 +1,16 @@
 window.addEventListener("DOMContentLoaded", () => {
 
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  window.addEventListener("resize", resize);
-  resize();
-
-/* =========================
-   CANVAS DE FOND
-========================= */
-const canvas = document.getElementById("bg");
+const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
+let W, H;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+window.onresize = resize; resize();
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resize);
-resize();
+let speed = 1;
+let bgCorruption = 0;
 
-let t = 0;
-
-function backgroundLoop() {
-  t += 0.005;
-
-  const g = Math.floor(20 + 10 * Math.sin(t));
-  ctx.fillStyle = `rgb(${g},${g},${g+10})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  requestAnimationFrame(backgroundLoop);
-}
-backgroundLoop();
-
-/* =========================
-   CLUSTERS TEXTE
-========================= */
-const container = document.getElementById("clusters");
-
-const words = [
+// === PHRASES ===
+const phrases = [
 "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
 "Chaque mot que tu lis est évalué",
@@ -457,26 +425,103 @@ const words = [
 "Un nom que personne n’a prononcé"
 
 ];
+const fonts = ["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
 
-function createCluster() {
-  const el = document.createElement("div");
-  el.className = "cluster";
-  el.textContent = words[Math.floor(Math.random() * words.length)];
+// === TITRES DYNAMIQUES ===
+const titlePhrases = [
+"Ne te trompe pas de porte",
+"Tu es le paramètre",
+"Il n’y a pas de dernière ligne",
+"La porte est toujours là"
+];
+document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
 
-  el.style.left = Math.random() * 100 + "vw";
-  el.style.top = 100 + Math.random() * 40 + "vh";
-  el.style.animationDuration = 15 + Math.random() * 20 + "s";
-  el.style.opacity = 0.5 + Math.random() * 0.5;
+// === CLUSTER CLASS ===
+class Cluster {
+  constructor(text){
+    this.text = text;
+    this.x = Math.random()*W;
+    this.y = Math.random()*H;
+    this.vx = (Math.random()-.5)*0.8;
+    this.vy = (Math.random()-.5)*0.8;
+    this.mass = 80 + Math.random()*220;
+    this.font = fonts[Math.floor(Math.random()*fonts.length)];
+    this.corrupt = 0;
+    this.memory = 0;
+    this.drag = false;
+    this.el = document.createElement('div');
+    this.el.className = 'cluster';
+    this.el.textContent = text;
+    this.el.style.fontFamily = this.font;
+    document.body.appendChild(this.el);
+    this.bind();
+  }
 
-  container.appendChild(el);
+  bind(){
+    this.el.onmousedown = () => { this.drag = true; this.el.style.cursor='grabbing'; };
+    window.onmouseup = () => { this.drag = false; this.el.style.cursor='grab'; };
+    window.onmousemove = e => { if(this.drag){ this.x = e.clientX; this.y = e.clientY; } };
+  }
 
-  setTimeout(() => el.remove(), 40000);
+  update(clusters){
+    if(!this.drag){ this.x += this.vx*speed; this.y += this.vy*speed; }
+
+    for(const c of clusters){
+      if(c!==this){
+        const dx=c.x-this.x, dy=c.y-this.y;
+        const d=Math.hypot(dx,dy)+0.1;
+        const force=(this.mass*c.mass)/(d*d*7000);
+        this.vx += force*dx/d; this.vy += force*dy/d;
+        if(d<90){
+          this.corrupt += 0.0015;
+          this.memory += 0.0008;
+          bgCorruption += 0.00015;
+          if(this.corrupt>0.6 && Math.random()<0.01){
+            this.el.classList.add('glitch');
+            this.el.textContent = this.text.split('').map(ch => Math.random()<0.15?String.fromCharCode(33+Math.random()*94):ch).join('');
+          }
+        }
+      }
+    }
+  }
+
+  render(){
+    this.x = (this.x+W)%W; this.y = (this.y+H)%H;
+    this.el.style.transform = `translate(${this.x}px,${this.y}px)`;
+    this.el.style.opacity = Math.max(0.35, 1-this.corrupt);
+    if(this.memory>0.4){ this.el.style.filter='blur(0.5px)'; }
+  }
 }
 
-// clusters initiaux
-for (let i = 0; i < 15; i++) {
-  setTimeout(createCluster, i * 400);
-}
+// === INIT CLUSTERS ===
+let clusters=[];
+for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+
+// === INTERACTIONS ===
+window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed = Math.max(0.2,Math.min(3,speed)); };
+window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
+
+// Mobile shake pour ajouter cluster
+let lastX=0,lastY=0,lastZ=0, lastTime=0;
+window.addEventListener('devicemotion', e=>{
+  const {x,y,z} = e.accelerationIncludingGravity;
+  const now = Date.now();
+  if(now - lastTime > 300){
+    const delta = Math.abs(x-lastX)+Math.abs(y-lastY)+Math.abs(z-lastZ);
+    if(delta>30) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+    lastX=x; lastY=y; lastZ=z; lastTime=now;
+  }
 });
-// clusters continus
-setInterval(createCluster, 1500);
+
+// === LOOP ===
+function loop(){
+  // Fond noir légèrement corrompu
+  ctx.fillStyle=`rgba(${6+bgCorruption*40},${6+bgCorruption*10},${10+bgCorruption*60},0.12)`;
+  ctx.fillRect(0,0,W,H);
+  clusters.forEach(c=>c.update(clusters));
+  clusters.forEach(c=>c.render());
+  requestAnimationFrame(loop);
+}
+loop();
+
+});
