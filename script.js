@@ -1,3 +1,16 @@
+window.addEventListener("DOMContentLoaded", () => {
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+
 /* =========================
    CANVAS DE FOND
 ========================= */
@@ -464,6 +477,6 @@ function createCluster() {
 for (let i = 0; i < 15; i++) {
   setTimeout(createCluster, i * 400);
 }
-
+});
 // clusters continus
 setInterval(createCluster, 1500);
