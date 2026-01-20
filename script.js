@@ -1,5 +1,6 @@
 const body = document.body;
 const canvas = document.createElement('canvas');
+canvas.style.pointerEvents = "none";
 canvas.id = 'background';
 document.body.prepend(canvas); // ⚠️ IMPORTANT
 const ctx = canvas.getContext('2d', { alpha: true });
@@ -526,8 +527,9 @@ window.addEventListener('devicemotion',e=>{
 
 // Loop
 function loop(){
-  ctx.fillStyle = `rgba(5,6,10,0.18)`;
-  ctx.fillRect(0,0,W,H);
+ctx.fillStyle = `rgba(5, 7, 12, 0.12)`; // ❌ jamais opaque
+ctx.fillRect(0, 0, W, H);
+
 
   clusters.forEach(c=>c.update(clusters));
   clusters.forEach(c=>c.render());
@@ -539,3 +541,13 @@ loop();
 // Titre dynamique
 const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
 document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
+
+//
+
+const test = document.createElement("div");
+test.className = "cluster";
+test.textContent = "Le texte existe.";
+test.style.left = "20px";
+test.style.top = "20px";
+document.body.appendChild(test);
+
