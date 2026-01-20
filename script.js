@@ -1,6 +1,3 @@
-alert("JS CHARGÉ");
-document.body.style.background = "#0b1020";
-
 const body = document.body;
 const canvas = document.createElement('canvas');
 canvas.id = 'background';
