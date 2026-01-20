@@ -1,10 +1,16 @@
 const body = document.body;
+const canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
+const ctx = canvas.getContext('2d');
 
-// --- Sélection aléatoire du fond à chaque visite ---
-const backgrounds = ['bg-black', 'bg-spectre', 'bg-coldcode', 'bg-glitchmatrix'];
+// --- Fond aléatoire ---
+const backgrounds = ['bg-black','bg-spectre','bg-coldcode','bg-glitchmatrix'];
 body.classList.add(backgrounds[Math.floor(Math.random()*backgrounds.length)]);
 
-// --- PHRASES ---
+let W,H;
+function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+window.onresize = resize; resize();
+
 const phrases = [
 "La continuité n’est pas ce qui reste identique",
 "Eux commencèrent à appeler cela la fatigue",
@@ -349,18 +355,76 @@ const phrases = [
 "Le livre ne vit plus sur le papier",
 "Le livre vit dans l’intervalle entre tes décisions futures",
 "La prochaine fois que tu hésiteras, la prochaine fois que tu obéiras, la prochaine fois que tu te diras « je n’ai pas le choix »; c’est là que l’Agence opère le mieux.",
-"Ne te trompe pas de porte, tu l’as déjà fait"
-
-  // ... ajoute toutes les phrases complètes ici
+"Ne te trompe pas de porte, tu l’as déjà fait",
+"Il fallait bien continuer",
+"Il fallait bien préserver l’ordre",
+"Il fallait bien éviter le chaos",
+"Poursuivez. Ne forcez rien. Ce monde est précieux",
+"Intégration totale requise",
+"Ce n’était pas une dictature, c’était pire, c’était une habitude",
+"Les systèmes locaux s’ajustaient déjà à sa future absence",
+"Θ comprit qu’il avait changé de catégorie",
+"Θ ne fuyait pas, il n’en voyait pas l’intérêt",
+"Il n’était plus un agent déviant, il était devenu un scénario",
+"L’Agence faisait ce qu’elle faisait toujours",
+"Θ contre Θ",
+"Personne ne connaissait mieux ses angles morts que lui-même",
+"L’Agence ne savait plus laquelle de ses itérations était la plus efficace",
+"La loyauté totale est stable",
+"La révolte est prévisible",
+"La compréhension sans rupture est catastrophique",
+"Consciences convergentes",
+"C’était une fonction incarnée",
+"Il ne terminait pas des paramètres hasardeux,il terminait des dynamiques",
+"On ne l’envoyait pas pour tuer quelqu’un, on l’envoyait pour faire en sorte que quelqu’un n’ait jamais existé comme problème",
+"L’agent 001 reconnut Θ avant même de le voir",
+"Trop instable",
+"Trop vivant.",
+"l y a chez certains êtres une manière d’occuper l’espace qui trahit leur passé; non pas ce qu’ils ont fait, mais ce qu’ils ont accepté de faire trop longtemps",
+"Tu es lent, mais tu vas loin",
+"Tu vas vite, mais toujours au même endroit",
+"Deux réponses opposées au même mensonge",
+"L’un avait obéi jusqu’à comprendre trop bien",
+"L’autre avait compris trop tôt pour obéir longtemps",
+"Il ne s’en prend pas aux individus, il s’en prend aux possibilités",
+"Θ posa la seule question qui comptait. Peut-on le faire hésiter ?",
+"Il est là pour empêcher la naissance de précédents",
+"L'Agence n’a jamais cherché à contrôler tous les mondes",
+"L'Agence cherche à empêcher qu’un seul monde prouve qu’on peut faire autrement sans s’effondrer immédiatement",
+"La loyauté absolue n’est pas un outil, c’est une matière première",
+"Ω est l’outil qui recycle ce qui commence à penser trop clairement",
+"Quelque part, Ω franchit une porte",
+"L’Agence ajuste déjà les probabilités",
+"Statistiquement, l’histoire favorise toujours la continuité",
+"Pour la première fois depuis très longtemps, le calcul n’est pas parfaitement stable",
+"Les événements récents ne constituent pas une anomalie systémique",
+"Ils relèvent d’une interprétation excessive de micro‑déviations locales",
+"Toute tentative de narration globale est à proscrire",
+"Le document fut signé par quelqu’un qui n’existait plus depuis trois versions. Cela n’arrêta personne",
+"On réassigna Θ comme concept obsolète. On le conserva sous forme d’exemple négatif, rangé entre Excès d’autonomie et Mauvaise lecture des causalités",
+"Les agents apprirent à réciter le cas de Θ comme on récite une faute morale : sans comprendre, mais avec application",
+"Les agents continuaient à passer les portes, mais ils sentaient leur poids",
+"Les agents continuaient à changer de monde, mais gardaient un accent",
+"Les agents continuaient à obéir, mais sans cette ferveur qui rend l’obéissance productive",
+"L’Agence corrigeait, toujours",
+"L’Agence corrigeait",
+"Chaque correction coûtait plus qu’elle ne rapportait",
+"Coloniser tous les possibles avait un effet secondaire non anticipé",
+"L’horreur ne venait plus des terminaison, elle venait de leur inutilité",
+"L’Agence observa, calcula",
+"L’Agence observait",
+"Aucune porte ne s’ouvrit",
+"l’Agence aurait pu intervenir, mais choisit de ne pas le faire, non par sagesse, mais par fatigue statistique",
+"Rien ne s’effondra",
+"Rien ne fut libéré",
+"L’Agence continuait d’exister",
+"Les archives restent ouvertes",
+"C’est écrit, en bas de page, sans signature"
+  // ... ajoute toutes les phrases ici
 ];
 
 const fonts=["Georgia","Times New Roman","serif","Arial","sans-serif","monospace"];
-let speed = 1, bgCorruption = 0;
-
-let W,H;
-function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
-window.onresize = resize;
-resize();
+let speed=1,bgCorruption=0;
 
 class Cluster {
   constructor(text){
@@ -374,41 +438,57 @@ class Cluster {
     this.corrupt=0;
     this.memory=0;
     this.drag=false;
-
     this.el=document.createElement('div');
     this.el.className='cluster';
     this.el.textContent=text;
     this.el.style.fontFamily=this.font;
     document.body.appendChild(this.el);
-
     this.bind();
   }
 
   bind(){
-    this.el.onmousedown=()=>{this.drag=true; this.el.style.cursor='grabbing';};
-    window.onmouseup=()=>{this.drag=false; this.el.style.cursor='grab';};
-    window.onmousemove=e=>{if(this.drag){this.x=e.clientX; this.y=e.clientY;}}
+    // Drag souris + touch
+    const startDrag=(x,y)=>{ this.drag=true; this.el.style.cursor='grabbing'; this.x=x; this.y=y; }
+    const endDrag=()=>{ this.drag=false; this.el.style.cursor='grab'; }
+
+    this.el.addEventListener('mousedown',e=>startDrag(e.clientX,e.clientY));
+    this.el.addEventListener('touchstart',e=>{
+      const t=e.touches[0]; startDrag(t.clientX,t.clientY);
+    },{passive:false});
+
+    window.addEventListener('mouseup',endDrag);
+    window.addEventListener('touchend',endDrag);
+
+    window.addEventListener('mousemove',e=>{ if(this.drag){this.x=e.clientX; this.y=e.clientY;} });
+    window.addEventListener('touchmove',e=>{
+      if(this.drag){
+        const t=e.touches[0];
+        this.x=t.clientX; this.y=t.clientY;
+      }
+    },{passive:false});
   }
 
   update(clusters){
-    if(!this.drag){this.x+=this.vx*speed; this.y+=this.vy*speed;}
-    for(const c of clusters){
+    if(!this.drag){ this.x+=this.vx*speed; this.y+=this.vy*speed; }
+
+    clusters.forEach(c=>{
       if(c!==this){
         const dx=c.x-this.x, dy=c.y-this.y;
         const d=Math.hypot(dx,dy)+0.1;
         const force=(this.mass*c.mass)/(d*d*7000);
         this.vx+=force*dx/d; this.vy+=force*dy/d;
+
         if(d<90){
-          this.corrupt+=0.0015;
-          this.memory+=0.0008;
-          bgCorruption+=0.00015;
-          if(this.corrupt>0.6 && Math.random()<0.01){
+          this.corrupt+=0.002;
+          this.memory+=0.001;
+          bgCorruption+=0.0002;
+          if(this.corrupt>0.6 && Math.random()<0.015){
             this.el.classList.add('glitch');
-            this.el.textContent=this.text.split('').map(c=>Math.random()<0.15?String.fromCharCode(33+Math.random()*94):c).join('');
+            this.el.textContent=this.text.split('').map(c=>Math.random()<0.2?String.fromCharCode(33+Math.random()*94):c).join('');
           }
         }
       }
-    }
+    });
   }
 
   render(){
@@ -420,30 +500,28 @@ class Cluster {
 }
 
 let clusters=[];
-for(let i=0;i<9;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
+for(let i=0;i<8;i++) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
 
-// --- Ajout par molette ---
-window.onwheel = e => { speed += e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed)); };
-
-// --- Ajout par clavier ---
-window.onkeydown = e => { clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
-
-// --- Ajout clusters par secousse (smartphone) ---
-let lastAccel = {x:null,y:null,z:null};
-window.addEventListener('devicemotion', e=>{
-  const a = e.accelerationIncludingGravity;
+// Molette
+window.onwheel=e=>{ speed+=e.deltaY<0?0.1:-0.1; speed=Math.max(0.2,Math.min(3,speed)); };
+// Clavier
+window.onkeydown=e=>{ clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); };
+// Secousse mobile
+let lastAccel={x:null,y:null,z:null};
+window.addEventListener('devicemotion',e=>{
+  const a=e.accelerationIncludingGravity;
   if(lastAccel.x!==null){
-    const delta = Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
-    if(delta>25){ clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)])); }
+    const delta=Math.abs(a.x-lastAccel.x)+Math.abs(a.y-lastAccel.y)+Math.abs(a.z-lastAccel.z);
+    if(delta>25) clusters.push(new Cluster(phrases[Math.floor(Math.random()*phrases.length)]));
   }
-  lastAccel = a;
+  lastAccel=a;
 });
 
-// --- Loop ---
+// Loop
 function loop(){
-  // Fond dynamique selon version
+  // Fond réactif spectre
   if(body.classList.contains('bg-spectre')){
-    const intensity = Math.min(0.3, clusters.length/50 + bgCorruption*0.2);
+    const intensity=Math.min(0.35,clusters.length/40 + bgCorruption*0.25);
     body.style.background = `linear-gradient(135deg, rgba(10,12,32,${1-intensity}), rgba(26,28,64,${1-intensity}), rgba(42,44,96,${1-intensity}))`;
   }
   clusters.forEach(c=>c.update(clusters));
@@ -452,6 +530,6 @@ function loop(){
 }
 loop();
 
-// --- Titre dynamique ---
+// Titre dynamique
 const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
 document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
