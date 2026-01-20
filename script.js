@@ -432,6 +432,10 @@ const titlePhrases = [
 "Ne te trompe pas de porte",
 "Tu es le paramètre",
 "Il n’y a pas de dernière ligne",
+"L’or y marie l’affamé",
+"L’horrible aride s’abat net",
+"Et dans la foule, j’ai entendu",
+"Un nom que personne n’a prononcé",
 "La porte est toujours là"
 ];
 document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
