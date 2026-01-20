@@ -1,7 +1,8 @@
 const body = document.body;
 const canvas = document.createElement('canvas');
-document.body.appendChild(canvas);
-const ctx = canvas.getContext('2d');
+canvas.id = 'background';
+document.body.prepend(canvas); // ⚠️ IMPORTANT
+const ctx = canvas.getContext('2d', { alpha: true });
 
 // --- Fond aléatoire ---
 const backgrounds = ['bg-black','bg-spectre','bg-coldcode','bg-glitchmatrix'];
@@ -92,7 +93,7 @@ const phrases = [
 "Celle que tu as laissée ouverte derrière toi voilà le problème",
 "Tu ne lis pas tu es lu tu es emporté tu es le texte",
 "Tu n’as jamais quitté le livre",
-"Chaque souffle crée, une respiration nouvelleune, bifurcation invisible",
+"Chaque souffle crée une respiration nouvelle, une bifurcation invisible",
 "Tu n’es pas en train de lire",
 "Positionné",
 "Évalué",
@@ -380,7 +381,7 @@ const phrases = [
 "L’agent 001 reconnut Θ avant même de le voir",
 "Trop instable",
 "Trop vivant.",
-"l y a chez certains êtres une manière d’occuper l’espace qui trahit leur passé; non pas ce qu’ils ont fait, mais ce qu’ils ont accepté de faire trop longtemps",
+"Il y a chez certains êtres une manière d’occuper l’espace qui trahit leur passé; non pas ce qu’ils ont fait, mais ce qu’ils ont accepté de faire trop longtemps",
 "Tu es lent, mais tu vas loin",
 "Tu vas vite, mais toujours au même endroit",
 "Deux réponses opposées au même mensonge",
@@ -401,7 +402,7 @@ const phrases = [
 "Ils relèvent d’une interprétation excessive de micro‑déviations locales",
 "Toute tentative de narration globale est à proscrire",
 "Le document fut signé par quelqu’un qui n’existait plus depuis trois versions. Cela n’arrêta personne",
-"On réassigna Θ comme concept obsolète. On le conserva sous forme d’exemple négatif, rangé entre Excès d’autonomie et Mauvaise lecture des causalités",
+"On réassigna Θ comme concept obsolète. On le conserva sous forme d’exemple négatif, rangé entre Excès d’Autonomie et Mauvaise Lecture des Causalités",
 "Les agents apprirent à réciter le cas de Θ comme on récite une faute morale : sans comprendre, mais avec application",
 "Les agents continuaient à passer les portes, mais ils sentaient leur poids",
 "Les agents continuaient à changer de monde, mais gardaient un accent",
@@ -419,7 +420,12 @@ const phrases = [
 "Rien ne fut libéré",
 "L’Agence continuait d’exister",
 "Les archives restent ouvertes",
-"C’est écrit, en bas de page, sans signature"
+"C’est écrit, en bas de page, sans signature",
+"L’or y marie l’affamé",
+"L’horrible aride s’abat net",
+"Et dans la foule, j’ai entendu",
+"Un nom que personne n’a prononcé"
+
   // ... ajoute toutes les phrases ici
 ];
 
@@ -519,13 +525,12 @@ window.addEventListener('devicemotion',e=>{
 
 // Loop
 function loop(){
-  // Fond réactif spectre
-  if(body.classList.contains('bg-spectre')){
-    const intensity=Math.min(0.35,clusters.length/40 + bgCorruption*0.25);
-    body.style.background = `linear-gradient(135deg, rgba(10,12,32,${1-intensity}), rgba(26,28,64,${1-intensity}), rgba(42,44,96,${1-intensity}))`;
-  }
+  ctx.fillStyle = `rgba(5,6,10,0.18)`;
+  ctx.fillRect(0,0,W,H);
+
   clusters.forEach(c=>c.update(clusters));
   clusters.forEach(c=>c.render());
+
   requestAnimationFrame(loop);
 }
 loop();
