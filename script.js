@@ -1,10 +1,20 @@
 const body = document.body;
-const canvas = document.createElement('canvas');
+const canvas = document.createElement("canvas");
+document.body.appendChild(canvas);
+
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+canvas.style.position = "fixed";
+canvas.style.inset = "0";
+canvas.style.zIndex = "0";
 canvas.style.pointerEvents = "none";
-canvas.id = 'background';
-document.body.prepend(canvas); // ⚠️ IMPORTANT
-const ctx = canvas.getContext('2d', { alpha: true });
-document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
 
 // --- Fond aléatoire ---
 const backgrounds = ['bg-black','bg-spectre','bg-coldcode','bg-glitchmatrix'];
@@ -526,18 +536,18 @@ window.addEventListener('devicemotion',e=>{
 });
 
 // Loop
-function loop(){
-ctx.fillStyle = `rgba(5, 7, 12, 0.12)`; // ❌ jamais opaque
-ctx.fillRect(0, 0, W, H);
+function loop() {
+  ctx.fillStyle = "rgba(10, 12, 20, 0.05)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-
-  clusters.forEach(c=>c.update(clusters));
-  clusters.forEach(c=>c.render());
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, 4, 0, Math.PI*2);
+  ctx.fill();
 
   requestAnimationFrame(loop);
 }
 loop();
-
 // Titre dynamique
 const titlePhrases=["Ne te trompe pas de porte","Tu es le paramètre","Il n’y a pas de dernière ligne","La porte est toujours là"];
 document.title = titlePhrases[Math.floor(Math.random()*titlePhrases.length)];
